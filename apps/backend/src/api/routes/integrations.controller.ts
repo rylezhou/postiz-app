@@ -5,7 +5,6 @@ import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
 import { ConnectIntegrationDto } from '@gitroom/nestjs-libraries/dtos/integrations/connect.integration.dto';
 import { IntegrationManager } from '@gitroom/nestjs-libraries/integrations/integration.manager';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
-import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Organization, User } from '@prisma/client';
 import { ApiKeyDto } from '@gitroom/nestjs-libraries/dtos/integrations/api.key.dto';
 import { IntegrationFunctionDto } from '@gitroom/nestjs-libraries/dtos/integrations/integration.function.dto';
@@ -16,11 +15,9 @@ import {
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 import { ApiTags } from '@nestjs/swagger';
-import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.request';
 import { NotEnoughScopesFilter } from '@gitroom/nestjs-libraries/integrations/integration.missing.scopes';
 import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.service';
 import { IntegrationTimeDto } from '@gitroom/nestjs-libraries/dtos/integrations/integration.time.dto';
-import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import { AuthTokenDetails } from '@gitroom/nestjs-libraries/integrations/social/social.integrations.interface';
 import { NotEnoughScopes } from '@gitroom/nestjs-libraries/integrations/social.abstract';
 
@@ -38,10 +35,10 @@ export class IntegrationsController {
   }
 
   @Get('/list')
-  async getIntegrationList(@GetOrgFromRequest() org: Organization) {
+  async getIntegrationList() {
     return {
       integrations: (
-        await this._integrationService.getIntegrationsList(org.id)
+        await this._integrationService.getIntegrationsList()
       ).map((p) => {
         const findIntegration = this._integrationManager.getSocialIntegration(
           p.providerIdentifier
@@ -67,12 +64,10 @@ export class IntegrationsController {
 
   @Post('/:id/nickname')
   async setNickname(
-    @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
     @Body() body: { name: string; picture: string }
   ) {
     const integration = await this._integrationService.getIntegrationById(
-      org.id,
       id
     );
     if (!integration) {
@@ -108,20 +103,15 @@ export class IntegrationsController {
   @Get('/:id')
   getSingleIntegration(
     @Param('id') id: string,
-    @Query('order') order: string,
-    @GetUserFromRequest() user: User,
-    @GetOrgFromRequest() org: Organization
+    @Query('order') order: string
   ) {
     return this._integrationService.getIntegrationForOrder(
       id,
-      order,
-      user.id,
-      org.id
+      order
     );
   }
 
   @Get('/social/:integration')
-  @CheckPolicies([AuthorizationActions.Create, Sections.CHANNEL])
   async getIntegrationUrl(
     @Param('integration') integration: string,
     @Query('refresh') refresh: string,
@@ -173,19 +163,16 @@ export class IntegrationsController {
 
   @Post('/:id/time')
   async setTime(
-    @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
     @Body() body: IntegrationTimeDto
   ) {
-    return this._integrationService.setTimes(org.id, id, body);
+    return this._integrationService.setTimes(id, body);
   }
   @Post('/function')
   async functionIntegration(
-    @GetOrgFromRequest() org: Organization,
     @Body() body: IntegrationFunctionDto
   ) {
     const getIntegration = await this._integrationService.getIntegrationById(
-      org.id,
       body.id
     );
     if (!getIntegration) {
@@ -231,9 +218,7 @@ export class IntegrationsController {
   }
 
   @Post('/article/:integration/connect')
-  @CheckPolicies([AuthorizationActions.Create, Sections.CHANNEL])
   async connectArticle(
-    @GetOrgFromRequest() org: Organization,
     @Param('integration') integration: string,
     @Body() api: ApiKeyDto
   ) {
@@ -259,7 +244,6 @@ export class IntegrationsController {
     }
 
     return this._integrationService.createOrUpdateIntegration(
-      org.id,
       name,
       picture,
       'article',
@@ -274,10 +258,8 @@ export class IntegrationsController {
   }
 
   @Post('/social/:integration/connect')
-  @CheckPolicies([AuthorizationActions.Create, Sections.CHANNEL])
   @UseFilters(new NotEnoughScopesFilter())
   async connectSocialMedia(
-    @GetOrgFromRequest() org: Organization,
     @Param('integration') integration: string,
     @Body() body: ConnectIntegrationDto
   ) {
@@ -356,7 +338,6 @@ export class IntegrationsController {
     }
 
     return this._integrationService.createOrUpdateIntegration(
-      org.id,
       name,
       picture,
       'social',
@@ -381,46 +362,40 @@ export class IntegrationsController {
 
   @Post('/disable')
   disableChannel(
-    @GetOrgFromRequest() org: Organization,
     @Body('id') id: string
   ) {
-    return this._integrationService.disableChannel(org.id, id);
+    return this._integrationService.disableChannel(id);
   }
 
   @Post('/instagram/:id')
   async saveInstagram(
     @Param('id') id: string,
-    @Body() body: { pageId: string; id: string },
-    @GetOrgFromRequest() org: Organization
+    @Body() body: { pageId: string; id: string }
   ) {
-    return this._integrationService.saveInstagram(org.id, id, body);
+    return this._integrationService.saveInstagram(id, body);
   }
 
   @Post('/facebook/:id')
   async saveFacebook(
     @Param('id') id: string,
-    @Body() body: { page: string },
-    @GetOrgFromRequest() org: Organization
+    @Body() body: { page: string }
   ) {
-    return this._integrationService.saveFacebook(org.id, id, body.page);
+    return this._integrationService.saveFacebook(id, body.page);
   }
 
   @Post('/linkedin-page/:id')
   async saveLinkedin(
     @Param('id') id: string,
-    @Body() body: { page: string },
-    @GetOrgFromRequest() org: Organization
+    @Body() body: { page: string }
   ) {
-    return this._integrationService.saveLinkedin(org.id, id, body.page);
+    return this._integrationService.saveLinkedin(id, body.page);
   }
 
   @Post('/enable')
   enableChannel(
-    @GetOrgFromRequest() org: Organization,
     @Body('id') id: string
   ) {
     return this._integrationService.enableChannel(
-      org.id,
       // @ts-ignore
       org?.subscription?.totalChannels || pricing.FREE.channel,
       id
@@ -429,19 +404,17 @@ export class IntegrationsController {
 
   @Delete('/')
   async deleteChannel(
-    @GetOrgFromRequest() org: Organization,
     @Body('id') id: string
   ) {
     const isTherePosts = await this._integrationService.getPostsForChannel(
-      org.id,
       id
     );
     if (isTherePosts.length) {
       for (const post of isTherePosts) {
-        await this._postService.deletePost(org.id, post.group);
+        await this._postService.deletePost(post.group);
       }
     }
 
-    return this._integrationService.deleteChannel(org.id, id);
+    return this._integrationService.deleteChannel(id);
   }
 }
