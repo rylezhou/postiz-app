@@ -1,5 +1,12 @@
 import {
-  Body, Controller, Delete, Get, Param, Post, Query, UseFilters
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseFilters,
 } from '@nestjs/common';
 import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
 import { ConnectIntegrationDto } from '@gitroom/nestjs-libraries/dtos/integrations/connect.integration.dto';
@@ -19,7 +26,11 @@ import { NotEnoughScopesFilter } from '@gitroom/nestjs-libraries/integrations/in
 import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.service';
 import { IntegrationTimeDto } from '@gitroom/nestjs-libraries/dtos/integrations/integration.time.dto';
 import { AuthTokenDetails } from '@gitroom/nestjs-libraries/integrations/social/social.integrations.interface';
-import { NotEnoughScopes } from '@gitroom/nestjs-libraries/integrations/social.abstract';
+import {
+  NotEnoughScopes,
+  RefreshToken,
+} from '@gitroom/nestjs-libraries/integrations/social.abstract';
+import { timer } from '@gitroom/helpers/utils/timer';
 
 @ApiTags('Integrations')
 @Controller('/integrations')
@@ -48,7 +59,7 @@ export class IntegrationsController {
           id: p.id,
           internalId: p.internalId,
           disabled: p.disabled,
-          picture: p.picture,
+          picture: p.picture || '/no-picture.jpg',
           identifier: p.providerIdentifier,
           inBetweenSteps: p.inBetweenSteps,
           refreshNeeded: p.refreshNeeded,
@@ -188,11 +199,51 @@ export class IntegrationsController {
       }
 
       if (integrationProvider[body.name]) {
-        return integrationProvider[body.name](
-          getIntegration.token,
-          body.data,
-          getIntegration.internalId
-        );
+        try {
+          const load = await integrationProvider[body.name](
+            getIntegration.token,
+            body.data,
+            getIntegration.internalId
+          );
+
+          return load;
+        } catch (err) {
+          if (err instanceof RefreshToken) {
+            const { accessToken, refreshToken, expiresIn } =
+              await integrationProvider.refreshToken(
+                getIntegration.refreshToken
+              );
+
+            if (accessToken) {
+              await this._integrationService.createOrUpdateIntegration(
+                getIntegration.organizationId,
+                getIntegration.name,
+                getIntegration.picture!,
+                'social',
+                getIntegration.internalId,
+                getIntegration.providerIdentifier,
+                accessToken,
+                refreshToken,
+                expiresIn
+              );
+
+              getIntegration.token = accessToken;
+
+              if (integrationProvider.refreshWait) {
+                await timer(10000);
+              }
+              return this.functionIntegration(org, body);
+            } else {
+              await this._integrationService.disconnectChannel(
+                org.id,
+                getIntegration
+              );
+              return false;
+            }
+          }
+
+          return false;
+        }
       }
       throw new Error('Function not found');
     }
@@ -334,7 +385,9 @@ export class IntegrationsController {
     }
 
     if (refresh && id !== refresh) {
-      throw new NotEnoughScopes('Please refresh the channel that needs to be refreshed');
+      throw new NotEnoughScopes(
+        'Please refresh the channel that needs to be refreshed'
+      );
     }
 
     return this._integrationService.createOrUpdateIntegration(
