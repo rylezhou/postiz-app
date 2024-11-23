@@ -1,0 +1,18 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.8.2
+2 info using node@v20.17.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/app/.npmrc
+5 silly config load:file:/root/.npmrc
+6 silly config load:file:/usr/local/etc/npmrc
+7 verbose title npm run prisma-db-push
+8 verbose argv "run" "prisma-db-push"
+9 verbose logfile logs-max:10 dir:/root/.npm/_logs/2024-11-23T06_20_34_845Z-
+10 verbose logfile /root/.npm/_logs/2024-11-23T06_20_34_845Z-debug-0.log
+11 silly logfile done cleaning log files
+12 verbose cwd /app
+13 verbose os Linux 6.8.0-49-generic
+14 verbose node v20.17.0
+15 verbose npm  v10.8.2
+16 verbose exit 1
+17 verbose code 1

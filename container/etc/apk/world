@@ -1,0 +1,9 @@
+alpine-baselayout
+alpine-keys
+apk-tools
+bash=5.2.21-r0
+busybox
+caddy
+libc-utils
+libstdc++
+supervisor=4.2.5-r4
