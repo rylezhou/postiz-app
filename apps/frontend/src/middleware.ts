@@ -3,14 +3,16 @@ import type { NextRequest } from 'next/server';
 import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
 import { internalFetch } from '@gitroom/helpers/utils/internal.fetch';
 
-// This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
   const nextUrl = request.nextUrl;
-  const authCookie = request.cookies.get('auth');
+  // const authCookie = request.cookies.get('auth');
+  
   if (nextUrl.pathname.startsWith('/uploads/')) {
     return NextResponse.next();
   }
-  // If the URL is logout, delete the cookie and redirect to login
+
+  // Comment out auth logout handling
+  /*
   if (nextUrl.href.indexOf('/auth/logout') > -1) {
     const response = NextResponse.redirect(
       new URL('/auth/login', nextUrl.href)
@@ -25,10 +27,13 @@ export async function middleware(request: NextRequest) {
     });
     return response;
   }
+  */
 
   const org = nextUrl.searchParams.get('org');
   const url = new URL(nextUrl).search;
 
+  // Comment out auth redirect logic
+  /*
   if (nextUrl.href.indexOf('/auth') === -1 && !authCookie) {
     const providers = ['google', 'settings'];
     const findIndex = providers.find((p) => nextUrl.href.indexOf(p) > -1);
@@ -44,7 +49,6 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  // If the url is /auth and the cookie exists, redirect to /
   if (nextUrl.href.indexOf('/auth') > -1 && authCookie) {
     return NextResponse.redirect(new URL(`/${url}`, nextUrl.href));
   }
@@ -64,6 +68,7 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.next();
   }
+  */
 
   try {
     if (org) {
@@ -93,6 +98,7 @@ export async function middleware(request: NextRequest) {
       return redirect;
     }
 
+    // Simplified root redirect
     if (nextUrl.pathname === '/') {
       return NextResponse.redirect(
         new URL(
@@ -122,7 +128,8 @@ export async function middleware(request: NextRequest) {
 
     return next;
   } catch (err) {
-    return NextResponse.redirect(new URL('/auth/logout', nextUrl.href));
+    // Simplified error handling
+    return NextResponse.redirect(new URL('/', nextUrl.href));
   }
 }
 
