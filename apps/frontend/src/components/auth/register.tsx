@@ -111,6 +111,11 @@ export function RegisterAfter({
 
     await fetchData('/auth/register', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      credentials: 'include', // This is important for handling cookies
       body: JSON.stringify({ ...data }),
     }).then((response) => {
       setLoading(false);

@@ -19,7 +19,11 @@ async function bootstrap() {
       origin: [
         process.env.FRONTEND_URL,
         ...(process.env.MAIN_URL ? [process.env.MAIN_URL] : []),
+        'http://localhost:3000',  // Add your frontend development URL
+        'http://localhost:4200',
       ],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],  // Add allowed methods
+      allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],    // Add allowed headers
     },
   });
 
