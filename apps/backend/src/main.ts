@@ -21,6 +21,7 @@ async function bootstrap() {
         ...(process.env.MAIN_URL ? [process.env.MAIN_URL] : []),
         'http://localhost:3000',  // Add your frontend development URL
         'http://localhost:4200',
+        'https://wnp1x8nk-5000.usw3.devtunnels.ms',
       ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],  // Add allowed methods
       allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],    // Add allowed headers
