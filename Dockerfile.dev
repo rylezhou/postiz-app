@@ -28,7 +28,7 @@ COPY var/docker/entrypoint.sh /app/entrypoint.sh
 COPY var/docker/supervisord.conf /etc/supervisord.conf
 COPY var/docker/supervisord /app/supervisord_available_configs/
 COPY var/docker/Caddyfile /app/Caddyfile
-COPY .env.example /config/postiz.env
+COPY .env.local /config/postiz.env
 
 VOLUME /config
 VOLUME /uploads
